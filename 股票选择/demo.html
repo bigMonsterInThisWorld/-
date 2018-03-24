@@ -82,12 +82,14 @@
 </div>
 
 <script src="js/jquery-3.2.1.min.js"></script>
-<script src="js/echarts-all.js"></script>
+<!--百度的echart-->
+<!--<script src="js/echarts-all.js"></script>-->
+
+<!--东方财富的echart-->
+<script src="js/emcharts.min.js"></script>
+
+
 <script>
-
-
-
-
 $(function () {
 
     var result_shares = [];  //选出来的股票
@@ -131,6 +133,21 @@ $(function () {
 
     var all_share_and_money = [];
 
+    var chart = new EmchartsWebLine({
+        container: 'share_600343',
+        width: 600,
+        height: 300,
+        showflag: true,
+        sepeNum: 6,
+        font: {
+            fontFamily: 'Microsoft Yahei',
+            fontSize: "12",
+            color: "#000"
+        },
+        xaxis: [],
+        series: []
+    });
+
     //获取实时资金数据
     function getRealyMoney(all_shares){
         for(var i = 0;i<all_shares.length;i++){
@@ -163,7 +180,21 @@ $(function () {
             realy_money_arr  : []    //y轴
         };
         var t_a = data.xa.split(',');
-        share_obj.time_arr = t_a.slice(0,t_a.length-1);
+        for(var i = 0;i<t_a.length;i++){
+            var time = t_a[i];
+            if (time != "") {
+                var isShow = false;
+                if (time == "09:31" || time == "10:30" || time == "11:30" || time == "14:00" || time == "15:00") {
+                    isShow = true;
+                }
+                share_obj.time_arr.push({
+                    value: time,
+                    showline: isShow,
+                    show: isShow
+                });
+            }
+
+        }
         var danwei = '万元';
         var main = {
             name: "主力净流入",
@@ -220,20 +251,16 @@ $(function () {
     function addLiItem(data){
         var li = list_item.clone();
         var $span = li.find('.title span');
-        var canvas_id = 'share_'+data.code;
+        var canvas_id = data.id;
         $span.eq(0).text(data.name);
         $span.eq(1).text(data.code);
         li.find('canvas').eq(0).attr('id',canvas_id);
         share_list.append(li);
-        console.log('--------------');
-        console.log(data.time_arr);
-        console.log(data.realy_money_arr);
-        console.log('--------------');
-        drow(data,canvas_id);
+        draw(data,chart);
     }
 
     //画折线图
-    function drow(data,canvas_id) {
+    function draw(data,obj) {
 //        var myChart = echarts.init(document.getElementById(canvas_id));
 //        var option = {
 //            xAxis : data.time_arr,
@@ -241,20 +268,25 @@ $(function () {
 //        };
 //        myChart.setOption(option);
 
-        var chart = new EmchartsWebLine({
-            container: canvas_id,
-            width: 600,
-            height: 300,
-            showflag: true,
-            sepeNum: 6,
-            font: {
-                fontFamily: 'Microsoft Yahei',
-                fontSize: "12",
-                color: "#000"
-            },
-            xaxis: data.time_arr,
-            series: data.realy_money_arr
-        });
+        console.log(data.realy_money_arr);
+        obj.option.xaxis = data.time_arr;
+        obj.option.series = data.realy_money_arr;
+        obj.option.container = data.id;
+
+//        var chart = new EmchartsWebLine({
+//            container: canvas_id,
+//            width: 600,
+//            height: 300,
+//            showflag: true,
+//            sepeNum: 6,
+//            font: {
+//                fontFamily: 'Microsoft Yahei',
+//                fontSize: "12",
+//                color: "#000"
+//            },
+//            xaxis: data.time_arr,
+//            series: data.realy_money_arr
+//        });
 
     }
 });
