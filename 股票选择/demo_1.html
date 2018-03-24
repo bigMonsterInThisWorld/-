@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <style>
-        * {
+        *{
             box-sizing: border-box;
         }
 
-        #dressing_by_screening {
+        #dressing_by_screening{
             cursor: pointer;
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -20,17 +20,18 @@
             text-align: center;
         }
 
-        ul {
+
+
+        ul{
             width: 100%;
         }
-
-        ul:after {
+        ul:after{
             content: '';
             display: table;
             clear: both;
         }
 
-        li {
+        li{
             float: left;
             width: 45%;
             height: 300px;
@@ -39,25 +40,25 @@
             margin-bottom: 10px;
         }
 
-        li:nth-child(odd) {
+        li:nth-child(odd){
             margin-right: 4%;
         }
 
-        .canvas_container {
+        .canvas_container{
             width: 100%;
             height: 250px;
             border: 1px solid black;
 
         }
 
-        .title {
+        .title{
             line-height: 45px;
             margin-bottom: 5px;
             padding-left: 50px;
 
         }
 
-        .title span {
+        .title span{
             font-size: 22px;
         }
 
@@ -71,8 +72,7 @@
         <li>
             <div class="title">
                 <span style="margin-right: 30px;">航天动力</span>
-                <span style="margin-right: 50px;">600343</span>
-                <span class="up_or_down">2%</span>
+                <span>600343</span>
             </div>
             <div class="canvas_container" id="share_600343">
                 <!--<canvas></canvas>-->
@@ -95,7 +95,7 @@
 
         var result_shares = [];  //选出来的股票
         var limit = 5;  //每次获取的条数
-        var shares_url = 'http://nufm.dfcfw.com/EM_Finance2014NumericApplication/JS.aspx?type=CT&cmd=C._A&sty=FCOIATA&sortType=(ChangePercent)&sortRule=-1&page=1&pageSize=' + limit + '&js=var%20YHtWrYNn={rank:[(x)],pages:(pc),total:(tot)}&token=7bc05d0d4c3c22ef9fca8c2a912d779c&jsName=quote_123&_g=0.628606915911589&_=1521821478486';  //获取股票的地址
+        var shares_url = 'http://nufm.dfcfw.com/EM_Finance2014NumericApplication/JS.aspx?type=CT&cmd=C._A&sty=FCOIATA&sortType=(ChangePercent)&sortRule=-1&page=1&pageSize='+limit+'&js=var%20YHtWrYNn={rank:[(x)],pages:(pc),total:(tot)}&token=7bc05d0d4c3c22ef9fca8c2a912d779c&jsName=quote_123&_g=0.628606915911589&_=1521821478486';  //获取股票的地址
 
         $('#dressing_by_screening').click(function () {
 
@@ -107,16 +107,16 @@
                 type: 'get',
                 success: function () {
                     var arr = YHtWrYNn.rank;
-                    for (var i = 0; i < arr.length; i++) {
+                    for(var i = 0;i<arr.length;i++){
                         var item = arr[i];
                         var obj = {};
                         var item_arr = item.split(',');
                         obj.market = item_arr[0];   //1：沪，2：深
                         obj.share_num = item_arr[1];   //股票代码
                         obj.share_name = item_arr[2];   //股票中文名
-                        obj.up_down = parseFloat(item_arr[5]);  //股票涨跌
                         all_shares.push(obj);
                     }
+                    console.log(JSON.stringify(all_shares,null,2));
                     getRealyMoney(all_shares);
                 },
                 error: function (err) {
@@ -126,16 +126,17 @@
         });
 
 
+
         var share_list = $('#share_list');
         var list_item = share_list.children('li').first().clone();
         share_list.html('');
+        console.log(list_item);
 
         var all_share_and_money = [];
 
         //获取实时资金数据
-        function getRealyMoney(all_shares) {
-            console.log(all_shares);
-            for (var i = 0; i < all_shares.length; i++) {
+        function getRealyMoney(all_shares){
+            for(var i = 0;i<all_shares.length;i++){
                 (function (i) {
                     var item = all_shares[i];
                     var code = item.share_num;   //股票代码
@@ -143,12 +144,12 @@
                     var name = item.share_name;  //股票名字
                     var url = 'http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=' + code + marke + '&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5';
                     $.ajax({
-                        url: url,
-                        type: 'get',
+                        url : url,
+                        type : 'get',
                         dataType: 'script',
-                        scriptCharset: 'utf-8',
-                        success: function () {
-                            dealTimeAndRealy(aff_data, item);
+                        scriptCharset : 'utf-8',
+                        success : function () {
+                            dealTimeAndRealy(aff_data,item);
                         }
                     });
                 })(i)
@@ -156,18 +157,17 @@
         }
 
         //处理时间与资金流向
-        function dealTimeAndRealy(data, obj) {
+        function dealTimeAndRealy(data,obj){
             var share_obj = {
-                code: obj.share_num,
-                name: obj.share_name,
-                id: 'share_' + obj.share_num,   //装折线图的div id
-                up_down : obj.up_down,  //涨跌
-                time_arr: [],   //x轴
-                realy_money_arr: [] //y轴
+                code : obj.share_num,
+                name : obj.share_name,
+                id : 'share_'+obj.share_num,   //装折线图的div id
+                time_arr : [],   //x轴
+                realy_money_arr  : [] //y轴
 
             };
             var t_a = data.xa.split(',');
-            for (var i = 0; i < t_a.length; i++) {
+            for(var i = 0;i<t_a.length;i++){
                 var time = t_a[i];
                 if (time != "") {
                     var isShow = false;
@@ -177,46 +177,46 @@
                     share_obj.time_arr.push(time);
                 }
             }
-            var main = {
-                name: "主力净流入",
-                lineStyle: {
-                    color: "#FE3EE1"
-                },
-                type: 'line',
-                data: []
-            };
-            var large = {
-                name: "超大单净流入",
-                lineStyle: {
-                    color: "#750600"
-                },
-                type: 'line',
-                data: []
-            };
-            var big = {
-                name: "大单净流入",
-                lineStyle: {
-                    color: "#FF1117"
-                },
-                type: 'line',
-                data: []
-            };
-            var middle = {
-                name: "中单净流入",
-                lineStyle: {
-                    color: "#fcff00"
-                },
-                type: 'line',
-                data: []
-            };
-            var small = {
-                name: "小单净流入",
-                lineStyle: {
-                    color: "#94C4EE"
-                },
-                type: 'line',
-                data: []
-            };
+        var main = {
+            name: "主力净流入",
+            lineStyle : {
+                color: "#FE3EE1"
+            },
+            type: 'line',
+            data: []
+        };
+        var large = {
+            name: "超大单净流入",
+            lineStyle : {
+                color: "#750600"
+            },
+            type: 'line',
+            data: []
+        };
+        var big = {
+            name: "大单净流入",
+            lineStyle : {
+                color: "#FF1117"
+            },
+            type: 'line',
+            data: []
+        };
+        var middle = {
+            name: "中单净流入",
+            lineStyle : {
+                color: "#FFB83D"
+            },
+            type: 'line',
+            data: []
+        };
+        var small = {
+            name: "小单净流入",
+            lineStyle : {
+                color: "#94C4EE"
+            },
+            type: 'line',
+            data: []
+        };
 
 //            var main  = [];
 //            var large = [];
@@ -226,7 +226,7 @@
 
 
             var a = data.ya;
-            for (var i = 0; i < a.length; i++) {
+            for(var i = 0;i<a.length;i++){
                 var i_a = a[i].split(',');
                 main.data.push(parseInt(i_a[0]));
                 large.data.push(parseInt(i_a[1]));
@@ -245,22 +245,14 @@
         }
 
         //添加dom元素
-        function addLiItem(data) {
+        function addLiItem(data){
             var li = list_item.clone();
             var $span = li.find('.title span');
             var canvas_id = data.id;
             $span.eq(0).text(data.name);
             $span.eq(1).text(data.code);
-            var span_3 = $span.eq(2);
-            var up_down = data.up_down;
-            span_3.text(up_down+'%');
-            if(up_down > 0){
-                span_3.css('color','#fc4040');
-            }else {
-                span_3.css('color','#37e402');
-            }
             var canvas_div = li.find('.canvas_container').eq(0);
-            canvas_div.attr('id', canvas_id);
+            canvas_div.attr('id',canvas_id);
             share_list.append(li);
             draw(data);
         }
@@ -269,18 +261,18 @@
         function draw(data) {
             var myChart = echarts.init(document.getElementById(data.id));
             option = {
-//                title: {
-//                    text: '折线图堆叠'
-//                },
+                title: {
+                    text: '折线图堆叠'
+                },
                 tooltip: {
                     trigger: 'axis'
                 },
-//                grid: {
-//                    left: '3%',
-//                    right: '4%',
-//                    bottom: '3%',
-//                    containLabel: true
-//                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
                 toolbox: {
                     feature: {
                         saveAsImage: {}
@@ -302,31 +294,38 @@
     });
 
 
+
+
+
+
+
+
+
     //通过当日资金流向筛选股票
     //获得资金净流动方向
-    //    var _stockCode = "600343",  //股票代码   //600311-1 沪  300634-2  深
-    //        _stockMarke = "1",  //1：沪   2：深
-    //        _stockName = "荣华实业",  //股票名字
-    //        _market = "hsa";
-    //    var Now = '2018-03-23 21:21';
-    //    var strUrl = 'http://ff.eastmoney.com/' + "/EM_CapitalFlowInterface/api/js?type=hff&rtntype=2&js=({data:[(x)]})&cb=var%20aff_data=&check=TMLBMSPROCR&acces_token=1942f5da9b46b069953c873404aad4b5&id=" + _stockCode + _stockMarke;
-    //
-    //    //  "15.5782,0,15.5782,-1.3856,-14.1925"
-    //    //   主力净流入，超大单净流入，大单净流入，中单净流入，小单净流入
-    //
-    //    var real_url = 'http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=6003111&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5&_=1521817558620';
-    //    $.ajax({
-    //        url: "http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=" + _stockCode + _stockMarke + "&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5",
-    //        type: 'get',
-    //        dataType: 'script',
-    //        scriptCharset: "utf-8",
-    //        success: function () {   //返回一个js对象 aff_data
-    //            console.log(aff_data);
-    //        },
-    //        error: function (err) {
-    //            console.log(err);
-    //        }
-    //    });
+//    var _stockCode = "600343",  //股票代码   //600311-1 沪  300634-2  深
+//        _stockMarke = "1",  //1：沪   2：深
+//        _stockName = "荣华实业",  //股票名字
+//        _market = "hsa";
+//    var Now = '2018-03-23 21:21';
+//    var strUrl = 'http://ff.eastmoney.com/' + "/EM_CapitalFlowInterface/api/js?type=hff&rtntype=2&js=({data:[(x)]})&cb=var%20aff_data=&check=TMLBMSPROCR&acces_token=1942f5da9b46b069953c873404aad4b5&id=" + _stockCode + _stockMarke;
+//
+//    //  "15.5782,0,15.5782,-1.3856,-14.1925"
+//    //   主力净流入，超大单净流入，大单净流入，中单净流入，小单净流入
+//
+//    var real_url = 'http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=6003111&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5&_=1521817558620';
+//    $.ajax({
+//        url: "http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=" + _stockCode + _stockMarke + "&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5",
+//        type: 'get',
+//        dataType: 'script',
+//        scriptCharset: "utf-8",
+//        success: function () {   //返回一个js对象 aff_data
+//            console.log(aff_data);
+//        },
+//        error: function (err) {
+//            console.log(err);
+//        }
+//    });
 
 
 </script>
