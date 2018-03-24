@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+
+        #dressing_by_screening{
+            cursor: pointer;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            font-size: 25px;
+            width: 60px;
+            border: 1px solid #ff504e;
+            text-align: center;
+        }
+
+
+
+        ul{
+            width: 100%;
+        }
+        ul:after{
+            content: '';
+            display: table;
+            clear: both;
+        }
+
+        li{
+            float: left;
+            width: 45%;
+            height: 300px;
+            border: 1px solid #ff7452;
+            list-style: none;
+            margin-bottom: 10px;
+        }
+
+        li:nth-child(odd){
+            margin-right: 4%;
+        }
+
+        .canvas_container{
+            width: 100%;
+            height: 250px;
+            border: 1px solid black;
+
+        }
+
+        .title{
+            line-height: 45px;
+            margin-bottom: 5px;
+            padding-left: 50px;
+
+        }
+
+        .title span{
+            font-size: 22px;
+        }
+
+    </style>
+</head>
+<body>
+<div id="dressing_by_screening">删选</div>
+<div>
+    <h2>选出来的股票</h2>
+    <ul id="share_list">
+        <li>
+            <div class="title">
+                <span style="margin-right: 30px;">航天动力</span>
+                <span>600343</span>
+            </div>
+            <div class="canvas_container">
+                <canvas id="share_600343"></canvas>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<script src="js/jquery-3.2.1.min.js"></script>
+<script src="js/echarts-all.js"></script>
+<script>
+
+
+
+
+$(function () {
+
+    var result_shares = [];  //选出来的股票
+    var limit = 5;  //每次获取的条数
+    var shares_url = 'http://nufm.dfcfw.com/EM_Finance2014NumericApplication/JS.aspx?type=CT&cmd=C._A&sty=FCOIATA&sortType=(ChangePercent)&sortRule=-1&page=1&pageSize='+limit+'&js=var%20YHtWrYNn={rank:[(x)],pages:(pc),total:(tot)}&token=7bc05d0d4c3c22ef9fca8c2a912d779c&jsName=quote_123&_g=0.628606915911589&_=1521821478486';  //获取股票的地址
+
+    $('#dressing_by_screening').click(function () {
+
+
+        var all_shares = [];
+        $.ajax({
+            url: shares_url,
+            dataType: 'script',
+            type: 'get',
+            success: function () {
+                var arr = YHtWrYNn.rank;
+                for(var i = 0;i<arr.length;i++){
+                    var item = arr[i];
+                    var obj = {};
+                    var item_arr = item.split(',');
+                    obj.market = item_arr[0];   //1：沪，2：深
+                    obj.share_num = item_arr[1];   //股票代码
+                    obj.share_name = item_arr[2];   //股票中文名
+                    all_shares.push(obj);
+                }
+                console.log(JSON.stringify(all_shares,null,2));
+                getRealyMoney(all_shares);
+            },
+            error: function (err) {
+                console.log(err);
+            }
+        });
+    });
+
+
+
+    var share_list = $('#share_list');
+    var list_item = share_list.children('li').first().clone();
+    share_list.html('');
+    console.log(list_item);
+
+    var all_share_and_money = [];
+
+    //获取实时资金数据
+    function getRealyMoney(all_shares){
+        for(var i = 0;i<all_shares.length;i++){
+            (function (i) {
+                var item = all_shares[i];
+                var code = item.share_num;   //股票代码
+                var marke = item.market;    //股票所属市场
+                var name = item.share_name;  //股票名字
+                var url = 'http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=' + code + marke + '&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5';
+                $.ajax({
+                    url : url,
+                    type : 'get',
+                    dataType: 'script',
+                    scriptCharset : 'utf-8',
+                    success : function () {
+                        dealTimeAndRealy(aff_data,item);
+                    }
+                });
+            })(i)
+        }
+    }
+
+    //处理时间与资金流向
+    function dealTimeAndRealy(data,obj){
+        var share_obj = {
+            code : obj.share_num,
+            name : obj.share_name,
+            id : 'share_'+obj.share_num,   //装折线图的div id
+            time_arr : [],   //x轴
+            realy_money_arr  : []    //y轴
+        };
+        var t_a = data.xa.split(',');
+        share_obj.time_arr = t_a.slice(0,t_a.length-1);
+        var danwei = '万元';
+        var main = {
+            name: "主力净流入",
+            color: "#FE3EE1",
+            data: [],
+            suffix: danwei
+        };
+        var large = {
+            name: "超大单净流入",
+            color: "#650000",
+            data: [],
+            suffix: danwei
+        };
+        var big = {
+            name: "大单净流入",
+            color: "#FF1117",
+            data: [],
+            suffix: danwei
+        };
+        var middle = {
+            name: "中单净流入",
+            color: "#FFB83D",
+            data: [],
+            suffix: danwei
+        };
+        var small = {
+            name: "小单净流入",
+            color: "#94C4EE",
+            data: [],
+            suffix: danwei
+        };
+
+
+        var a = data.ya;
+        for(var i = 0;i<a.length;i++){
+            var i_a = a[i].split(',');
+            main.data.push(i_a[0]);
+            large.data.push(i_a[1]);
+            big.data.push(i_a[2]);
+            middle.data.push(i_a[3]);
+            small.data.push(i_a[4]);
+        }
+
+        share_obj.realy_money_arr.push(main);
+        share_obj.realy_money_arr.push(large);
+        share_obj.realy_money_arr.push(big);
+        share_obj.realy_money_arr.push(middle);
+        share_obj.realy_money_arr.push(small);
+        addLiItem(share_obj);
+    }
+
+//    console.log(all_share_and_money);
+    //添加dom元素
+    function addLiItem(data){
+        var li = list_item.clone();
+        var $span = li.find('.title span');
+        var canvas_id = 'share_'+data.code;
+        $span.eq(0).text(data.name);
+        $span.eq(1).text(data.code);
+        li.find('canvas').eq(0).attr('id',canvas_id);
+        share_list.append(li);
+        console.log('--------------');
+        console.log(data.time_arr);
+        console.log(data.realy_money_arr);
+        console.log('--------------');
+        drow(data,canvas_id);
+    }
+
+    //画折线图
+    function drow(data,canvas_id) {
+//        var myChart = echarts.init(document.getElementById(canvas_id));
+//        var option = {
+//            xAxis : data.time_arr,
+//            series : data.realy_money_arr,
+//        };
+//        myChart.setOption(option);
+
+        var chart = new EmchartsWebLine({
+            container: canvas_id,
+            width: 600,
+            height: 300,
+            showflag: true,
+            sepeNum: 6,
+            font: {
+                fontFamily: 'Microsoft Yahei',
+                fontSize: "12",
+                color: "#000"
+            },
+            xaxis: data.time_arr,
+            series: data.realy_money_arr
+        });
+
+    }
+});
+
+
+
+
+
+
+
+
+
+    //通过当日资金流向筛选股票
+    //获得资金净流动方向
+    var _stockCode = "600343",  //股票代码   //600311-1 沪  300634-2  深
+        _stockMarke = "1",  //1：沪   2：深
+        _stockName = "荣华实业",  //股票名字
+        _market = "hsa";
+    var Now = '2018-03-23 21:21';
+    var strUrl = 'http://ff.eastmoney.com/' + "/EM_CapitalFlowInterface/api/js?type=hff&rtntype=2&js=({data:[(x)]})&cb=var%20aff_data=&check=TMLBMSPROCR&acces_token=1942f5da9b46b069953c873404aad4b5&id=" + _stockCode + _stockMarke;
+
+    //  "15.5782,0,15.5782,-1.3856,-14.1925"
+    //   主力净流入，超大单净流入，大单净流入，中单净流入，小单净流入
+
+    var real_url = 'http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=6003111&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5&_=1521817558620';
+    $.ajax({
+        url: "http://ff.eastmoney.com/EM_CapitalFlowInterface/api/js?id=" + _stockCode + _stockMarke + "&type=ff&check=MLBMS&cb=var%20aff_data=&js={(x)}&rtntype=3&acces_token=1942f5da9b46b069953c873404aad4b5",
+        type: 'get',
+        dataType: 'script',
+        scriptCharset: "utf-8",
+        success: function () {   //返回一个js对象 aff_data
+            console.log(aff_data);
+        },
+        error: function (err) {
+            console.log(err);
+        }
+    });
+
+
+</script>
+</body>
+</html>
