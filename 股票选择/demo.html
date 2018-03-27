@@ -64,6 +64,10 @@
     </style>
 </head>
 <body>
+<div style="margin-bottom: 30px;">
+    开始 ：<input type="number" onblur="setNum('begin',this.value)">
+    结束 ：<input type="number" onblur="setNum('limit',this.value)">
+</div>
 <div id="dressing_by_screening">画图</div>
 <div>
     <h2>选出来的股票</h2>
@@ -89,40 +93,51 @@
 <!--东方财富的echart-->
 <!--<script src="js/emcharts.min.js"></script>-->
 
-
+<!--所有的股票-->
+<script src="js/all_shares.js"></script>
 <script>
-    $(function () {
 
         var result_shares = [];  //选出来的股票
-        var limit = 5;  //每次获取的条数
+        var limit = 3000;  //每次获取的条数
         var shares_url = 'http://nufm.dfcfw.com/EM_Finance2014NumericApplication/JS.aspx?type=CT&cmd=C._A&sty=FCOIATA&sortType=(ChangePercent)&sortRule=-1&page=1&pageSize=' + limit + '&js=var%20YHtWrYNn={rank:[(x)],pages:(pc),total:(tot)}&token=7bc05d0d4c3c22ef9fca8c2a912d779c&jsName=quote_123&_g=0.628606915911589&_=1521821478486';  //获取股票的地址
 
+        var begin = 0;
+        var limit = 0;
+        function setNum(type,val) {
+            if(type == 'begin'){
+                begin = parseInt(val);
+            }else if(type == 'limit') {
+                limit = parseInt(val);
+            }
+        }
+
         $('#dressing_by_screening').click(function () {
-
-
             var all_shares = [];
-            $.ajax({
-                url: shares_url,
-                dataType: 'script',
-                type: 'get',
-                success: function () {
-                    var arr = YHtWrYNn.rank;
-                    for (var i = 0; i < arr.length; i++) {
-                        var item = arr[i];
-                        var obj = {};
-                        var item_arr = item.split(',');
-                        obj.market = item_arr[0];   //1：沪，2：深
-                        obj.share_num = item_arr[1];   //股票代码
-                        obj.share_name = item_arr[2];   //股票中文名
-                        obj.up_down = parseFloat(item_arr[5]);  //股票涨跌
-                        all_shares.push(obj);
-                    }
-                    getRealyMoney(all_shares);
-                },
-                error: function (err) {
-                    console.log(err);
-                }
-            });
+//            $.ajax({
+//                url: shares_url,
+//                dataType: 'script',
+//                type: 'get',
+//                success: function () {
+//                    var arr = YHtWrYNn.rank;
+//
+//                    for (var i = 0; i < arr.length; i++) {
+//                        var item = arr[i];
+//                        var obj = {};
+//                        var item_arr = item.split(',');
+//                        obj.market = item_arr[0];   //1：沪，2：深
+//                        obj.share_num = item_arr[1];   //股票代码
+//                        obj.share_name = item_arr[2];   //股票中文名
+////                        obj.up_down = parseFloat(item_arr[5]);  //股票涨跌
+//                        all_shares.push(obj);
+//                    }
+////                    getRealyMoney(all_shares);
+//                    console.log(JSON.stringify(all_shares,null,2));
+//                },
+//                error: function (err) {
+//                    console.log(err);
+//                }
+//            });
+            getRealyMoney(all_share_arr,begin,limit);
         });
 
 
@@ -133,9 +148,8 @@
         var all_share_and_money = [];
 
         //获取实时资金数据
-        function getRealyMoney(all_shares) {
-            console.log(all_shares);
-            for (var i = 0; i < all_shares.length; i++) {
+        function getRealyMoney(all_shares,begin,limit) {
+            for (var i = begin; i < begin+limit; i++) {
                 (function (i) {
                     var item = all_shares[i];
                     var code = item.share_num;   //股票代码
@@ -299,7 +313,7 @@
 
             myChart.setOption(option);
         }
-    });
+
 
 
     //通过当日资金流向筛选股票
